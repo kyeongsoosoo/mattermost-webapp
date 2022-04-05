@@ -141,7 +141,6 @@ export function isDevMode(): boolean;
 
 export function getClosestParent(elem: HTMLElement, selector: string): void;
 
-export function applyHotkeyMarkdown(e: KeyEvent): {message: string; selectionStart: number; selectionEnd: number};
 export function adjustSelection(inputBox: HTMLInputElement, e: KeyEvent): void;
 
 export function getNextBillingDate(): string;

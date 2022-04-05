@@ -48,11 +48,22 @@ import {ServerError} from 'mattermost-redux/types/errors';
 import {FileInfo} from 'mattermost-redux/types/files';
 
 import RhsSuggestionList from 'components/suggestion/rhs_suggestion_list';
+import {ShowFormat} from 'components/show_format/show_format';
+import EmojiMap from 'utils/emoji_map';
+import {
+    MarkdownFormattedMessage,
+    MarkdownMessageType,
+} from 'components/markdown_formatted_message/markdown_formatted_message';
+import {
+    applyMarkdown,
+    ApplyMarkdownOptions,
+} from 'utils/markdown/apply_markdown';
+import {FormattingBar} from 'components/formatting_bar/formatting_bar';
+import {ToggleFormattingBar} from 'components/toggle_formatting_bar/toggle_formatting_bar';
 
 const KeyCodes = Constants.KeyCodes;
 
 const CreateCommentDraftTimeoutMilliseconds = 500;
-
 type Props = {
 
     /**
@@ -242,6 +253,7 @@ type Props = {
     isThreadView?: boolean;
     openModal: <P>(modalData: ModalData<P>) => void;
     useCustomGroupMentions: boolean;
+    emojiMap: EmojiMap;
     markdownPreviewFeatureIsEnabled: boolean;
 }
 
@@ -258,7 +270,9 @@ type State = {
     postError?: React.ReactNode;
     errorClass: string | null;
     serverError: (ServerError & {submittedMessage?: string}) | null;
-}
+    showFormat: boolean;
+    isFormattingBarVisible: boolean;
+};
 
 class CreateComment extends React.PureComponent<Props, State> {
     private lastBlurAt = 0;
@@ -302,6 +316,8 @@ class CreateComment extends React.PureComponent<Props, State> {
             scrollbarWidth: 0,
             errorClass: null,
             serverError: null,
+            showFormat: false,
+            isFormattingBarVisible: false,
         };
 
         this.textboxRef = React.createRef();
@@ -692,6 +708,7 @@ class CreateComment extends React.PureComponent<Props, State> {
             this.setState({
                 postError: null,
                 serverError: null,
+                showFormat: false,
             });
         } catch (err: any) {
             if (isErrorInvalidSlashCommand(err)) {
@@ -710,28 +727,22 @@ class CreateComment extends React.PureComponent<Props, State> {
     }
 
     commentMsgKeyPress = (e: React.KeyboardEvent) => {
-        const {
-            ctrlSend,
-            codeBlockOnCtrlEnter,
-        } = this.props;
+        const {ctrlSend, codeBlockOnCtrlEnter} = this.props;
 
-        const {
-            allowSending,
-            withClosedCodeBlock,
-            message,
-        } = postMessageOnKeyPress(
-            e,
-            this.state.draft!.message,
-            Boolean(ctrlSend),
-            Boolean(codeBlockOnCtrlEnter),
-            0,
-            0,
-            this.state.caretPosition,
-        ) as {
-            allowSending: boolean;
-            withClosedCodeBlock?: boolean;
-            message?: string;
-        };
+        const {allowSending, withClosedCodeBlock, message} =
+            postMessageOnKeyPress(
+                e,
+                this.state.draft!.message,
+                Boolean(ctrlSend),
+                Boolean(codeBlockOnCtrlEnter),
+                0,
+                0,
+                this.state.caretPosition,
+            ) as {
+                allowSending: boolean;
+                withClosedCodeBlock?: boolean;
+                message?: string;
+            };
 
         if (allowSending) {
             if (e.persist) {
@@ -846,7 +857,14 @@ class CreateComment extends React.PureComponent<Props, State> {
             }
         }
 
-        if (!e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && Utils.isKeyPressed(e, Constants.KeyCodes.UP) && message === '') {
+        if (
+            !e.ctrlKey &&
+            !e.metaKey &&
+            !e.altKey &&
+            !e.shiftKey &&
+            Utils.isKeyPressed(e, Constants.KeyCodes.UP) &&
+            message === ''
+        ) {
             e.preventDefault();
             if (this.textboxRef.current) {
                 this.textboxRef.current.blur();
@@ -858,7 +876,8 @@ class CreateComment extends React.PureComponent<Props, State> {
             }
         }
 
-        const ctrlKeyCombo = Utils.cmdOrCtrlPressed(e) && !e.altKey && !e.shiftKey;
+        const ctrlKeyCombo =
+            Utils.cmdOrCtrlPressed(e) && !e.altKey && !e.shiftKey;
         const ctrlAltCombo = Utils.cmdOrCtrlPressed(e, true) && e.altKey;
 
         if (ctrlKeyCombo) {
@@ -868,14 +887,34 @@ class CreateComment extends React.PureComponent<Props, State> {
             } else if (Utils.isKeyPressed(e, Constants.KeyCodes.DOWN)) {
                 e.preventDefault();
                 this.props.onMoveHistoryIndexForward();
-            } else if (Utils.isKeyPressed(e, Constants.KeyCodes.B) ||
-                Utils.isKeyPressed(e, Constants.KeyCodes.I)) {
-                this.applyHotkeyMarkdown(e);
+            } else if (Utils.isKeyPressed(e, Constants.KeyCodes.B)) {
+                e.preventDefault();
+                this.applyMarkdown({
+                    markdownMode: 'bold',
+                    selectionStart: (e.target as any).selectionStart,
+                    selectionEnd: (e.target as any).selectionEnd,
+                    value: (e.target as any).value,
+                });
+            } else if (Utils.isKeyPressed(e, Constants.KeyCodes.I)) {
+                e.preventDefault();
+                this.applyMarkdown({
+                    markdownMode: 'italic',
+                    selectionStart: (e.target as any).selectionStart,
+                    selectionEnd: (e.target as any).selectionEnd,
+                    value: (e.target as any).value,
+                });
             }
-        }
-
-        if (ctrlAltCombo && Utils.isKeyPressed(e, Constants.KeyCodes.K)) {
-            this.applyHotkeyMarkdown(e);
+        } else if (
+            ctrlAltCombo &&
+            Utils.isKeyPressed(e, Constants.KeyCodes.K)
+        ) {
+            e.preventDefault();
+            this.applyMarkdown({
+                markdownMode: 'link',
+                selectionStart: (e.target as any).selectionStart,
+                selectionEnd: (e.target as any).selectionEnd,
+                value: (e.target as any).value,
+            });
         }
 
         if (lastMessageReactionKeyCombo) {
@@ -883,8 +922,8 @@ class CreateComment extends React.PureComponent<Props, State> {
         }
     }
 
-    applyHotkeyMarkdown = (e: React.KeyboardEvent) => {
-        const res = Utils.applyHotkeyMarkdown(e);
+    applyMarkdown = (options: ApplyMarkdownOptions) => {
+        const res = applyMarkdown(options);
 
         const draft = this.state.draft!;
         const modifiedDraft = {
@@ -955,7 +994,12 @@ class CreateComment extends React.PureComponent<Props, State> {
         }
     }
 
-    handleUploadError = (err: string | ServerError | null, clientId: string | number = -1, currentChannelId?: string, rootId = '') => {
+    handleUploadError = (
+        err: string | ServerError | null,
+        clientId: string | number = -1,
+        currentChannelId?: string,
+        rootId = '',
+    ) => {
         if (clientId !== -1) {
             const draft = {...this.draftsForPost[rootId]!};
             const uploadsInProgress = [...draft.uploadsInProgress];
@@ -1026,10 +1070,7 @@ class CreateComment extends React.PureComponent<Props, State> {
     }
 
     getFileCount = () => {
-        const {
-            fileInfos,
-            uploadsInProgress,
-        } = this.state.draft!;
+        const {fileInfos, uploadsInProgress} = this.state.draft!;
         return fileInfos.length + uploadsInProgress.length;
     }
 
@@ -1146,6 +1187,8 @@ class CreateComment extends React.PureComponent<Props, State> {
         }
 
         let fileUpload;
+        let showFormat;
+        let toggleFormattingBar;
         if (!readOnlyChannel && !this.props.shouldShowPreview) {
             fileUpload = (
                 <FileUpload
@@ -1160,6 +1203,23 @@ class CreateComment extends React.PureComponent<Props, State> {
                     rootId={this.props.rootId}
                     channelId={this.props.channelId}
                     postType={this.props.isThreadView ? 'thread' : 'comment'}
+                />
+            );
+            showFormat = (
+                <ShowFormat
+                    onClick={() => {
+                        this.setState({showFormat: !this.state.showFormat});
+                    }}
+                />
+            );
+            toggleFormattingBar = (
+                <ToggleFormattingBar
+                    onClick={() => {
+                        this.setState({
+                            isFormattingBarVisible:
+                                !this.state.isFormattingBarVisible,
+                        });
+                    }}
                 />
             );
         }
@@ -1196,7 +1256,10 @@ class CreateComment extends React.PureComponent<Props, State> {
 
         let createMessage;
         if (readOnlyChannel) {
-            createMessage = Utils.localizeMessage('create_post.read_only', 'This channel is read-only. Only members with permission can post here.');
+            createMessage = Utils.localizeMessage(
+                'create_post.read_only',
+                'This channel is read-only. Only members with permission can post here.',
+            );
         } else {
             createMessage = Utils.localizeMessage('create_comment.addComment', 'Reply to this thread...');
         }
@@ -1206,6 +1269,7 @@ class CreateComment extends React.PureComponent<Props, State> {
             scrollbarClass = ' scroll';
         }
 
+        const message = readOnlyChannel ? '' : draft.message;
         return (
             <form onSubmit={this.handleSubmit}>
                 <div
@@ -1213,7 +1277,11 @@ class CreateComment extends React.PureComponent<Props, State> {
                     aria-label={ariaLabelReplyInput}
                     tabIndex={-1}
                     className={`post-create a11y__region${scrollbarClass}`}
-                    style={this.state.renderScrollbar && this.state.scrollbarWidth ? {'--detected-scrollbar-width': `${this.state.scrollbarWidth}px`} as any : undefined}
+                    style={
+                        this.state.renderScrollbar && this.state.scrollbarWidth ? ({
+                            '--detected-scrollbar-width': `${this.state.scrollbarWidth}px`,
+                        } as any) : undefined
+                    }
                     data-a11y-sort-order='4'
                 >
                     <div
@@ -1231,11 +1299,22 @@ class CreateComment extends React.PureComponent<Props, State> {
                                 onComposition={this.emitTypingEvent}
                                 onHeightChange={this.handleHeightChange}
                                 handlePostError={this.handlePostError}
-                                value={readOnlyChannel ? '' : draft.message}
+                                value={message}
                                 onBlur={this.handleBlur}
                                 createMessage={createMessage}
                                 emojiEnabled={this.props.enableEmojiPicker}
                                 channelId={this.props.channelId}
+                                inputComponent={
+                                    this.state.showFormat ? () => (
+                                        <MarkdownFormattedMessage
+                                            messageType={
+                                                MarkdownMessageType.Comment
+                                            }
+                                            message={message}
+                                            emojiMap={this.props.emojiMap}
+                                        />
+                                    ) : undefined
+                                }
                                 rootId={this.props.rootId}
                                 isRHS={true}
                                 id='reply_textbox'
@@ -1246,20 +1325,39 @@ class CreateComment extends React.PureComponent<Props, State> {
                                 suggestionList={RhsSuggestionList}
                                 badConnection={this.props.badConnection}
                                 listenForMentionKeyClick={true}
-                                useChannelMentions={this.props.useChannelMentions}
+                                useChannelMentions={
+                                    this.props.useChannelMentions
+                                }
                             />
+                            <FormattingBar
+                                applyMarkdown={this.applyMarkdown}
+                                value={message}
+                                textBox={this.textboxRef.current?.getInputBox()}
+                                isOpen={this.state.isFormattingBarVisible}
+                            />
+
+                            <span
+                                className={classNames('post-body__actions', {
+                                    formattingBarOpen:
+                                        this.state.isFormattingBarVisible,
+                                    '--top': true,
+                                })}
+                            >
+                                {showFormat}
+                            </span>
                             <span
                                 ref={this.createCommentControlsRef}
-                                className='post-body__actions'
+                                className={classNames('post-body__actions', {
+                                    '--bottom': true,
+                                })}
                             >
+                                {toggleFormattingBar}
                                 {fileUpload}
                                 {emojiPicker}
                             </span>
                         </div>
                     </div>
-                    <div
-                        className='post-create-footer'
-                    >
+                    <div className='post-create-footer'>
                         <div className='d-flex justify-content-between'>
                             <div className='col'>
                                 <MsgTyping
