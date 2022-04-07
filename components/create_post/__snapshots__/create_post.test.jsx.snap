@@ -43,9 +43,24 @@ exports[`components/create_post Show tutorial 1`] = `
           useChannelMentions={true}
           value=""
         />
+        <FormattingBar
+          applyMarkdown={[Function]}
+          isOpen={false}
+          value=""
+        />
         <span
-          className="post-body__actions"
+          className="post-body__actions --top"
         >
+          <ShowFormat
+            onClick={[Function]}
+          />
+        </span>
+        <span
+          className="post-body__actions --bottom"
+        >
+          <ToggleFormattingBar
+            onClick={[Function]}
+          />
           <Connect(injectIntl(FileUpload))
             channelId="owsyt8n43jfxjpzh9np93mx1wa"
             fileCount={0}
@@ -170,9 +185,24 @@ exports[`components/create_post should match snapshot for center textbox 1`] = `
           useChannelMentions={true}
           value=""
         />
+        <FormattingBar
+          applyMarkdown={[Function]}
+          isOpen={false}
+          value=""
+        />
         <span
-          className="post-body__actions"
+          className="post-body__actions --top"
         >
+          <ShowFormat
+            onClick={[Function]}
+          />
+        </span>
+        <span
+          className="post-body__actions --bottom"
+        >
+          <ToggleFormattingBar
+            onClick={[Function]}
+          />
           <Connect(injectIntl(FileUpload))
             channelId="owsyt8n43jfxjpzh9np93mx1wa"
             fileCount={0}
@@ -297,8 +327,16 @@ exports[`components/create_post should match snapshot when cannot post 1`] = `
           useChannelMentions={true}
           value=""
         />
+        <FormattingBar
+          applyMarkdown={[Function]}
+          isOpen={false}
+          value=""
+        />
         <span
-          className="post-body__actions"
+          className="post-body__actions --top"
+        />
+        <span
+          className="post-body__actions --bottom"
         >
           <a
             aria-label="Send a message"
@@ -389,9 +427,24 @@ exports[`components/create_post should match snapshot when file upload disabled 
           useChannelMentions={true}
           value=""
         />
+        <FormattingBar
+          applyMarkdown={[Function]}
+          isOpen={false}
+          value=""
+        />
         <span
-          className="post-body__actions"
+          className="post-body__actions --top"
         >
+          <ShowFormat
+            onClick={[Function]}
+          />
+        </span>
+        <span
+          className="post-body__actions --bottom"
+        >
+          <ToggleFormattingBar
+            onClick={[Function]}
+          />
           <Connect(injectIntl(FileUpload))
             channelId="owsyt8n43jfxjpzh9np93mx1wa"
             fileCount={0}
@@ -516,9 +569,24 @@ exports[`components/create_post should match snapshot, can post; preview disable
           useChannelMentions={true}
           value=""
         />
+        <FormattingBar
+          applyMarkdown={[Function]}
+          isOpen={false}
+          value=""
+        />
         <span
-          className="post-body__actions"
+          className="post-body__actions --top"
         >
+          <ShowFormat
+            onClick={[Function]}
+          />
+        </span>
+        <span
+          className="post-body__actions --bottom"
+        >
+          <ToggleFormattingBar
+            onClick={[Function]}
+          />
           <Connect(injectIntl(FileUpload))
             channelId="owsyt8n43jfxjpzh9np93mx1wa"
             fileCount={0}
@@ -643,9 +711,24 @@ exports[`components/create_post should match snapshot, can post; preview enabled
           useChannelMentions={true}
           value=""
         />
+        <FormattingBar
+          applyMarkdown={[Function]}
+          isOpen={false}
+          value=""
+        />
         <span
-          className="post-body__actions"
+          className="post-body__actions --top"
         >
+          <ShowFormat
+            onClick={[Function]}
+          />
+        </span>
+        <span
+          className="post-body__actions --bottom"
+        >
+          <ToggleFormattingBar
+            onClick={[Function]}
+          />
           <Connect(injectIntl(FileUpload))
             channelId="owsyt8n43jfxjpzh9np93mx1wa"
             fileCount={0}
@@ -770,8 +853,16 @@ exports[`components/create_post should match snapshot, cannot post; preview disa
           useChannelMentions={true}
           value=""
         />
+        <FormattingBar
+          applyMarkdown={[Function]}
+          isOpen={false}
+          value=""
+        />
         <span
-          className="post-body__actions"
+          className="post-body__actions --top"
+        />
+        <span
+          className="post-body__actions --bottom"
         >
           <a
             aria-label="Send a message"
@@ -862,8 +953,16 @@ exports[`components/create_post should match snapshot, cannot post; preview enab
           useChannelMentions={true}
           value=""
         />
+        <FormattingBar
+          applyMarkdown={[Function]}
+          isOpen={false}
+          value=""
+        />
         <span
-          className="post-body__actions"
+          className="post-body__actions --top"
+        />
+        <span
+          className="post-body__actions --bottom"
         >
           <a
             aria-label="Send a message"
@@ -954,9 +1053,24 @@ exports[`components/create_post should match snapshot, init 1`] = `
           useChannelMentions={true}
           value=""
         />
+        <FormattingBar
+          applyMarkdown={[Function]}
+          isOpen={false}
+          value=""
+        />
         <span
-          className="post-body__actions"
+          className="post-body__actions --top"
         >
+          <ShowFormat
+            onClick={[Function]}
+          />
+        </span>
+        <span
+          className="post-body__actions --bottom"
+        >
+          <ToggleFormattingBar
+            onClick={[Function]}
+          />
           <Connect(injectIntl(FileUpload))
             channelId="owsyt8n43jfxjpzh9np93mx1wa"
             fileCount={0}
