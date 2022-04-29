@@ -71,6 +71,7 @@ export function emitChannelClickEvent(channel: Channel) {
             LocalStorageStore.setPenultimateChannelName(userId, teamId, penultimate);
             LocalStorageStore.setPreviousChannelName(userId, teamId, chan.name);
         }
+        LocalStorageStore.setPreviousViewedType(userId, teamId, PreviousViewedTypes.CHANNELS);
 
         if (penultimateType === PreviousViewedTypes.THREADS || penultimate !== chan.name) {
             LocalStorageStore.setPreviousViewedType(userId, teamId, PreviousViewedTypes.CHANNELS);
