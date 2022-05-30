@@ -55,6 +55,28 @@ describe('Collapsed Reply Threads', () => {
     });
 
     it('MM-T4843_1 should go to threads view when switching a team if that was the last view on that team', () => {
+        // # Go to the ‘Town Square' channel on Team A
+        cy.visit(`/${teamA.name}/channels/town-square`);
+
+        // # Switch to Team B
+        cy.get(`#${teamB.name}TeamButton`, {timeout: TIMEOUTS.ONE_MIN}).should('be.visible').click();
+
+        // * Verify team display name changes correctly.
+        cy.uiGetLHSHeader().findByText(teamB.display_name);
+
+        // # Go to the ‘Threads’ view on Team B
+        cy.uiGetSidebarThreadsButton().click();
+
+        cy.wait(TIMEOUTS.ONE_SEC);
+
+        // # Switch back to Team A
+        cy.get(`#${teamA.name}TeamButton`, {timeout: TIMEOUTS.ONE_MIN}).should('be.visible').click();
+
+        // Verify url is set up for threads view
+        cy.url().should('include', `${teamA.name}/threads`);
+    });
+
+    it('MM-40908_1 should go to threads view when switching a team if that was the last view on that team', () => {
         // # Go to the ‘Threads’ view on Team A
         cy.uiGetSidebarThreadsButton().click();
 
